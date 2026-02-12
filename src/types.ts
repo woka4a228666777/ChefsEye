@@ -28,6 +28,7 @@ export interface ShoppingListItem {
   category: string;
   quantity: string;
   completed: boolean;
+  addedAt?: Date;
 }
 
 export interface RecipeSearchFilters {

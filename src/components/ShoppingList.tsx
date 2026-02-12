@@ -51,7 +51,7 @@ const ShoppingList: React.FC<ShoppingListProps> = ({ onBack }) => {
     };
 
     try {
-      await storage.addShoppingListItem(newItem);
+      await storage.addToShoppingList(newItem);
       setItems(prev => [...prev, newItem]);
       setNewItemName('');
       setNewItemCategory('');
@@ -63,7 +63,7 @@ const ShoppingList: React.FC<ShoppingListProps> = ({ onBack }) => {
 
   const toggleItem = async (itemId: string) => {
     try {
-      await storage.toggleShoppingListItem(itemId);
+      await storage.updateShoppingItem(itemId, { completed: !items.find(item => item.id === itemId)?.completed });
       setItems(prev => prev.map(item => 
         item.id === itemId 
           ? { ...item, completed: !item.completed }
@@ -76,7 +76,9 @@ const ShoppingList: React.FC<ShoppingListProps> = ({ onBack }) => {
 
   const removeItem = async (itemId: string) => {
     try {
-      await storage.removeShoppingListItem(itemId);
+      const list = await storage.getShoppingList();
+      const filteredList = list.filter(item => item.id !== itemId);
+      await storage.saveShoppingList(filteredList);
       setItems(prev => prev.filter(item => item.id !== itemId));
     } catch (error) {
       console.error('Failed to remove item:', error);
@@ -85,7 +87,7 @@ const ShoppingList: React.FC<ShoppingListProps> = ({ onBack }) => {
 
   const clearCompleted = async () => {
     try {
-      await storage.clearCompletedShoppingItems();
+      await storage.clearCompletedItems();
       setItems(prev => prev.filter(item => !item.completed));
     } catch (error) {
       console.error('Failed to clear completed items:', error);

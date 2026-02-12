@@ -64,9 +64,12 @@ const VISION_CONFIG = {
     'https://vision-api-proxy.vercel.app/api/analyze',
     'https://cloud-vision-proxy.fly.dev/analyze'
   ],
+  // Современная альтернатива - Hugging Face Inference API
+  HUGGING_FACE_API: 'https://api-inference.huggingface.co/models/microsoft/beit-base-patch16-224-pt22k-ft22k',
+  HUGGING_FACE_TOKEN: 'hf_your_token_here', // Нужно заменить на реальный токен
   // Таймауты
-  TIMEOUT: 10000, // 10 секунд
-  MAX_RETRIES: 2
+  TIMEOUT: 15000, // 15 секунд для современных API
+  MAX_RETRIES: 3
 };
 
 // Кэш для результатов распознавания с ограничением размера и времени жизни
@@ -188,12 +191,12 @@ export class VisionService {
         
         // Если API вернуло мало продуктов, используем демо-режим
         console.warn('[VisionService] Vision API вернуло мало продуктов, используем демо-режим');
-        return await this.demoVisionProcessing(imageFile);
+        return await this.demoVisionProcessing();
         
       } catch (error) {
         console.warn('[VisionService] Vision API недоступно, используем демо-режим:', error);
         // Fallback to demo mode
-        return await this.demoVisionProcessing(imageFile);
+        return await this.demoVisionProcessing();
       }
     } catch (error) {
       if (error instanceof VisionServiceError) {
@@ -203,24 +206,36 @@ export class VisionService {
       
       // Для любых других ошибок используем демо-режим вместо выбрасывания ошибки
       console.error('[VisionService] Неожиданная ошибка, используем демо-режим:', error);
-      return await this.demoVisionProcessing(imageFile);
+      return await this.demoVisionProcessing();
     }
   }
 
-  private static async demoVisionProcessing(file: File): Promise<VisionResult> {
+  private static async demoVisionProcessing(): Promise<VisionResult> {
     // Демо-режим: возвращаем пример распознанных продуктов
     // В реальном приложении здесь будет анализ изображения
     
     // Имитация обработки - возвращаем случайный набор продуктов
     const demoProducts = [
-      // Фрукты и овощи
-      ['яблоко', 'банан', 'апельсин', 'помидор', 'огурец', 'морковь', 'лук'],
+      // Фрукты
+      ['яблоко', 'банан', 'апельсин', 'лимон', 'груша', 'виноград', 'персик', 'абрикос', 'слива', 'киви', 'манго', 'ананас', 'клубника', 'малина', 'черника', 'ежевика', 'арбуз', 'дыня', 'гранат', 'инжир'],
+      // Овощи
+      ['помидор', 'огурец', 'морковь', 'лук', 'картофель', 'капуста', 'перец', 'баклажан', 'кабачок', 'тыква', 'свекла', 'редис', 'редиска', 'чеснок', 'имбирь', 'шпинат', 'салат', 'руккола', 'петрушка', 'укроп'],
       // Молочные продукты
-      ['молоко', 'сыр', 'йогурт', 'сметана', 'творог', 'кефир', 'масло'],
-      // Мясо и рыба
-      ['курица', 'говядина', 'свинина', 'рыба', 'колбаса', 'сосиски', 'яйца'],
+      ['молоко', 'сыр', 'йогурт', 'сметана', 'творог', 'кефир', 'масло сливочное', 'ряженка', 'простокваша', 'сливки', 'творожный сыр', 'моцарелла', 'брынза', 'сгущенное молоко', 'мороженое', 'творожная масса', 'йогурт питьевой', 'молочный коктейль', 'творожный десерт', 'сыр плавленый'],
+      // Мясо и птица
+      ['курица', 'говядина', 'свинина', 'индейка', 'утка', 'гусь', 'кролик', 'телятина', 'баранина', 'колбаса', 'сосиски', 'ветчина', 'бекон', 'сало', 'фарш', 'пельмени', 'котлеты', 'шашлык', 'куриная грудка', 'куриные окорочка'],
+      // Рыба и морепродукты
+      ['рыба', 'лосось', 'тунец', 'селедка', 'скумбрия', 'камбала', 'треска', 'окунь', 'щука', 'карп', 'креветки', 'кальмары', 'мидии', 'устрицы', 'краб', 'икра', 'крабовые палочки', 'морской коктейль', 'рыбные консервы', 'сушеная рыба'],
       // Бакалея
-      ['хлеб', 'рис', 'макароны', 'мука', 'сахар', 'соль', 'масло растительное']
+      ['хлеб', 'рис', 'макароны', 'мука', 'сахар', 'соль', 'масло растительное', 'крупа гречневая', 'овсяные хлопья', 'манная крупа', 'пшено', 'перловка', 'кукурузная крупа', 'горох', 'фасоль', 'чечевица', 'нут', 'сухофрукты', 'орехи', 'семечки'],
+      // Напитки
+      ['вода', 'сок', 'чай', 'кофе', 'газировка', 'лимонад', 'квас', 'компот', 'морс', 'минеральная вода', 'энергетик', 'спортивное питание', 'молочный коктейль', 'смузи', 'какао', 'горячий шоколад', 'кисель', 'узвар', 'травяной чай', 'зеленый чай'],
+      // Сладости и выпечка
+      ['шоколад', 'печенье', 'торт', 'пирожное', 'конфеты', 'вафли', 'пряники', 'зефир', 'мармелад', 'халва', 'пастила', 'кекс', 'булочка', 'круассан', 'пончик', 'пирог', 'пирожок', 'блины', 'оладьи', 'вафли'],
+      // Замороженные продукты
+      ['мороженое', 'пельмени', 'овощи замороженные', 'ягоды замороженные', 'фрукты замороженные', 'рыба замороженная', 'мясо замороженное', 'полуфабрикаты', 'блины замороженные', 'пицца замороженная', 'картофель фри', 'котлеты замороженные', 'тесто замороженное', 'мороженые грибы', 'морепродукты замороженные', 'готовые блюда замороженные', 'десерты замороженные', 'фруктовый лед', 'сорбет', 'мороженое в стаканчике'],
+      // Консервы
+      ['овощные консервы', 'фруктовые консервы', 'рыбные консервы', 'мясные консервы', 'джем', 'варенье', 'мед', 'сгущенное молоко', 'томатная паста', 'кукуруза консервированная', 'горошек консервированный', 'фасоль консервированная', 'грибы консервированные', 'оливки', 'маслины', 'ананасы консервированные', 'персики консервированные', 'компот консервированный', 'икра овощная', 'лечо']
     ];
 
     // Выбираем случайную категорию и 3-5 продуктов из нее
@@ -262,14 +277,16 @@ export class VisionService {
   // Метод для получения категории продукта по названию
   static getProductCategory(productName: string): string {
     const categories: Record<string, string[]> = {
-      'Овощи': ['помидор', 'огурец', 'морковь', 'лук', 'картофель', 'капуста', 'перец'],
-      'Фрукты': ['яблоко', 'банан', 'апельсин', 'лимон', 'груша', 'виноград', 'персик'],
-      'Молочные продукты': ['молоко', 'сыр', 'йогурт', 'сметана', 'творог', 'кефир', 'масло сливочное'],
-      'Мясо и птица': ['курица', 'говядина', 'свинина', 'колбаса', 'сосиски', 'ветчина', 'фарш'],
-      'Рыба и морепродукты': ['рыба', 'креветки', 'кальмары', 'икра', 'лосось', 'тунец'],
-      'Бакалея': ['хлеб', 'рис', 'макароны', 'мука', 'сахар', 'соль', 'масло растительное', 'крупа'],
-      'Напитки': ['вода', 'сок', 'чай', 'кофе', 'газировка', 'молоко'],
-      'Замороженные продукты': ['мороженое', 'пельмени', 'овощи замороженные', 'ягоды замороженные']
+      'Фрукты': ['яблоко', 'банан', 'апельсин', 'лимон', 'груша', 'виноград', 'персик', 'абрикос', 'слива', 'киви', 'манго', 'ананас', 'клубника', 'малина', 'черника', 'ежевика', 'арбуз', 'дыня', 'гранат', 'инжир'],
+      'Овощи': ['помидор', 'огурец', 'морковь', 'лук', 'картофель', 'капуста', 'перец', 'баклажан', 'кабачок', 'тыква', 'свекла', 'редис', 'редиска', 'чеснок', 'имбирь', 'шпинат', 'салат', 'руккола', 'петрушка', ' укроп'],
+      'Молочные продукты': ['молоко', 'сыр', 'йогурт', 'сметана', 'творог', 'кефир', 'масло сливочное', 'ряженка', 'простокваша', 'сливки', 'творожный сыр', 'моцарелла', 'брынза', 'сгущенное молоко', 'мороженое', 'творожная масса', 'йогурт питьевой', 'молочный коктейль', 'творожный десерт', 'сыр плавленый'],
+      'Мясо и птица': ['курица', 'говядина', 'свинина', 'индейка', 'утка', 'гусь', 'кролик', 'телятина', 'баранина', 'колбаса', 'сосиски', 'ветчина', 'бекон', 'сало', 'фарш', 'пельмени', 'котлеты', 'шашлык', 'куриная грудка', 'куриные окорочка'],
+      'Рыба и морепродукты': ['рыба', 'лосось', 'тунец', 'селедка', 'скумбрия', 'камбала', 'треска', 'окунь', 'щука', 'карп', 'креветки', 'кальмары', 'мидии', 'устрицы', 'краб', 'икра', 'крабовые палочки', 'морской коктейль', 'рыбные консервы', 'сушеная рыба'],
+      'Бакалея': ['хлеб', 'рис', 'макароны', 'мука', 'сахар', 'соль', 'масло растительное', 'крупа гречневая', 'овсяные хлопья', 'манная крупа', 'пшено', 'перловка', 'кукурузная крупа', 'горох', 'фасоль', 'чечевица', 'нут', 'сухофрукты', 'орехи', 'семечки'],
+      'Напитки': ['вода', 'сок', 'чай', 'кофе', 'газировка', 'лимонад', 'квас', 'компот', 'морс', 'минеральная вода', 'энергетик', 'спортивное питание', 'молочный коктейль', 'смузи', 'какао', 'горячий шоколад', 'кисель', 'узвар', 'травяный чай', 'зеленый чай'],
+      'Сладости и выпечка': ['шоколад', 'печенье', 'торт', 'пирожное', 'конфеты', 'вафли', 'пряники', 'зефир', 'мармелад', 'халва', 'пастила', 'кекс', 'булочка', 'круассан', 'пончик', 'пирог', 'пирожок', 'блины', 'оладьи', 'вафли'],
+      'Замороженные продукты': ['мороженое', 'пельмени', 'овощи замороженные', 'ягоды замороженные', 'фрукты замороженные', 'рыба замороженная', 'мясо замороженное', 'полуфабрикаты', 'блины замороженные', 'пицца замороженная', 'картофель фри', 'котлеты замороженные', 'тесто замороженное', 'мороженые грибы', 'морепродукты замороженные', 'готовые блюда замороженные', 'десерты замороженные', 'фруктовый лед', 'сорбет', 'мороженое в стаканчике'],
+      'Консервы': ['овощные консервы', 'фруктовые консервы', 'рыбные консервы', 'мясные консервы', 'джем', 'варенье', 'мед', 'сгущенное молоко', 'томатная паста', 'кукуруза консервированная', 'горошек консервированный', 'фасоль консервированная', 'грибы консервированные', 'оливки', 'маслины', 'ананасы консервированные', 'персики консервированные', 'компот консервированный', 'икра овощная', 'лечо']
     };
 
     const lowerName = productName.toLowerCase();
@@ -314,10 +331,16 @@ export class VisionService {
         {
           image: { content: base64Image },
           features: [
-            { type: 'LABEL_DETECTION', maxResults: 20 },
-            { type: 'OBJECT_LOCALIZATION', maxResults: 15 },
-            { type: 'TEXT_DETECTION', maxResults: 10 }
-          ]
+            { type: 'LABEL_DETECTION', maxResults: 25 }, // Увеличили для лучшего охвата
+            { type: 'OBJECT_LOCALIZATION', maxResults: 20 }, // Увеличили для лучшего распознавания
+            { type: 'TEXT_DETECTION', maxResults: 15 }, // Увеличили для большего текста
+            { type: 'WEB_DETECTION', maxResults: 15 } // Добавили веб-детекцию для контекста
+          ],
+          imageContext: {
+            cropHintsParams: {
+              aspectRatios: [0.8, 1, 1.2, 1.5, 1.8, 2.0, 2.5, 3.0] // Расширенный диапазон для разных продуктов
+            }
+          }
         }
       ]
     };
@@ -413,8 +436,8 @@ export class VisionService {
       }
       
       // Если все прокси недоступны или вернули пустые результаты
-      console.log('[VisionService] Все прокси недоступны, используем реалистичную симуляцию');
-      return this.createRealisticSimulation(file);
+      console.log('[VisionService] Все прокси недоступны, пробуем современную альтернативу - Hugging Face');
+      return this.callHuggingFaceAPI(file);
     }
   }
 
@@ -431,7 +454,7 @@ export class VisionService {
     });
   }
 
-  // Обработка ответа от Google Vision API
+  // Обработка ответа от Google Vision API с улучшенным AI-распознаванием
   private static processVisionResponse(data: any): VisionResult {
     const response = data.responses?.[0];
     if (!response) {
@@ -440,10 +463,10 @@ export class VisionService {
 
     const products: ProductDetection[] = [];
 
-    // Обрабатываем обнаруженные объекты (более строгая фильтрация)
+    // Обрабатываем обнаруженные объекты - основная информация от нейросети
     if (response.localizedObjectAnnotations) {
       response.localizedObjectAnnotations.forEach((obj: any) => {
-        if (obj.name && obj.score > 0.6 && this.isFoodRelated(obj.name)) { // Повышенная уверенность + проверка на еду
+        if (obj.name && obj.score > 0.5 && this.isFoodRelated(obj.name)) { // Пониженный порог для большего охвата
           const translatedName = this.translateLabel(obj.name);
           
           // Дополнительная проверка - исключаем общие категории
@@ -463,36 +486,74 @@ export class VisionService {
       });
     }
 
-    // Обрабатываем лейблы (более строгая фильтрация)
+    // Обрабатываем лейблы - дополнительная информация от нейросети
     if (response.labelAnnotations) {
       response.labelAnnotations.forEach((label: any) => {
-        if (label.description && label.score > 0.75 && this.isFoodRelated(label.description)) {
+        if (label.description && label.score > 0.65 && this.isFoodRelated(label.description)) {
           const translatedName = this.translateLabel(label.description);
           
-          // Исключаем общие категории и дубликаты
-          if (!this.isGenericCategory(translatedName) && 
-              !products.some(p => p.name.toLowerCase() === translatedName.toLowerCase())) {
-            products.push({
-              name: translatedName,
-              confidence: label.score
-            });
+          // Исключаем общие категории и проверяем на специфичность
+          if (!this.isGenericCategory(translatedName) && this.isSpecificFood(translatedName)) {
+            // Проверяем, нет ли уже такого продукта
+            const existingProduct = products.find(p => 
+              p.name.toLowerCase() === translatedName.toLowerCase() ||
+              this.isSimilarProduct(p.name, translatedName)
+            );
+            
+            if (!existingProduct) {
+              products.push({
+                name: translatedName,
+                confidence: label.score
+              });
+            } else if (label.score > existingProduct.confidence) {
+              // Обновляем уверенность если нашли более точное совпадение
+              existingProduct.confidence = label.score;
+            }
           }
         }
       });
     }
 
-    // Обрабатываем текст (может содержать названия продуктов)
-    if (response.textAnnotations && products.length < 2) {
-      response.textAnnotations.slice(0, 5).forEach((text: any) => {
-        if (text.description && this.isFoodRelated(text.description)) {
+    // Обрабатываем веб-детекцию - дополнительные контекстные подсказки
+    if (response.webDetection && response.webDetection.webEntities) {
+      response.webDetection.webEntities.forEach((entity: any) => {
+        if (entity.description && entity.score > 0.7 && this.isFoodRelated(entity.description)) {
+          const translatedName = this.translateLabel(entity.description);
+          
+          if (!this.isGenericCategory(translatedName) && this.isSpecificFood(translatedName)) {
+            const existingProduct = products.find(p => 
+              p.name.toLowerCase() === translatedName.toLowerCase()
+            );
+            
+            if (!existingProduct && products.length < 10) {
+              products.push({
+                name: translatedName,
+                confidence: entity.score * 0.9 // Немного снижаем уверенность для веб-детекции
+              });
+            }
+          }
+        }
+      });
+    }
+
+    // Обрабатываем текст - может содержать названия продуктов на упаковках
+    if (response.textAnnotations) {
+      response.textAnnotations.slice(0, 10).forEach((text: any) => {
+        if (text.description && this.isPotentialFood(text.description)) {
           const translatedName = this.translateLabel(text.description);
           
-          if (!this.isGenericCategory(translatedName) && 
-              !products.some(p => p.name.toLowerCase() === translatedName.toLowerCase())) {
-            products.push({
-              name: translatedName,
-              confidence: 0.7 // Средняя уверенность для текста
-            });
+          // Более строгая проверка для текста
+          if (this.isSpecificFood(translatedName) && !this.isGenericCategory(translatedName)) {
+            const existingProduct = products.find(p => 
+              p.name.toLowerCase() === translatedName.toLowerCase()
+            );
+            
+            if (!existingProduct && products.length < 12) {
+              products.push({
+                name: translatedName,
+                confidence: 0.6 // Средняя уверенность для текста
+              });
+            }
           }
         }
       });
@@ -501,10 +562,10 @@ export class VisionService {
     // Фильтруем дубликаты и сортируем по уверенности
     const uniqueProducts = this.removeDuplicates(products);
     
-    // Ограничиваем количество результатов (максимум 8 самых уверенных)
+    // Ограничиваем количество результатов (максимум 12 самых уверенных)
     const finalProducts = uniqueProducts
       .sort((a, b) => b.confidence - a.confidence)
-      .slice(0, 8);
+      .slice(0, 12);
     
     return {
       products: finalProducts,
@@ -532,6 +593,79 @@ export class VisionService {
     return {
       products: this.removeDuplicates(products),
       imageDescription: data.description || 'Распознанные продукты'
+    };
+  }
+
+  // Вызов современного Hugging Face Inference API
+  private static async callHuggingFaceAPI(file: File): Promise<VisionResult> {
+    try {
+      console.log('[VisionService] Вызываем Hugging Face Inference API');
+      
+      const base64Image = await this.fileToBase64(file);
+      
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), VISION_CONFIG.TIMEOUT);
+      
+      const response = await fetch(VISION_CONFIG.HUGGING_FACE_API, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${VISION_CONFIG.HUGGING_FACE_TOKEN}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          inputs: base64Image,
+          parameters: {
+            top_k: 10,
+            threshold: 0.7
+          }
+        }),
+        signal: controller.signal
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.warn(`[VisionService] Hugging Face API error: ${response.status} - ${errorText}`);
+        throw new Error(`HTTP ${response.status}: ${errorText.substring(0, 100)}`);
+      }
+
+      const data = await response.json();
+      console.log('[VisionService] Hugging Face API успешно ответил');
+      
+      return this.processHuggingFaceResponse(data);
+      
+    } catch (error) {
+      console.warn('[VisionService] Hugging Face API недоступен:', error);
+      
+      // Если все современные API недоступны, используем реалистичную симуляцию
+      console.log('[VisionService] Все современные API недоступны, используем реалистичную симуляцию');
+      return this.createRealisticSimulation(file);
+    }
+  }
+
+  // Обработка ответа от Hugging Face API
+  private static processHuggingFaceResponse(data: any): VisionResult {
+    const products: ProductDetection[] = [];
+
+    if (Array.isArray(data)) {
+      data.forEach((item: any) => {
+        if (item.label && item.score > 0.6) {
+          const translatedName = this.translateLabel(item.label);
+          
+          if (this.isFoodRelated(translatedName) && !this.isGenericCategory(translatedName)) {
+            products.push({
+              name: translatedName,
+              confidence: item.score
+            });
+          }
+        }
+      });
+    }
+
+    return {
+      products: this.removeDuplicates(products),
+      imageDescription: 'Распознанные продукты через современную нейросеть'
     };
   }
 
@@ -797,22 +931,107 @@ export class VisionService {
     return text;
   }
 
-  // Проверка, относится ли лейбл к еде
+  // Проверка, относится ли лейбл к еде (расширенная версия)
   private static isFoodRelated(label: string): boolean {
-    const foodKeywords = ['food', 'fruit', 'vegetable', 'drink', 'meat', 'dairy', 'grain', 'bakery'];
+    const foodKeywords = [
+      // Основные категории
+      'food', 'fruit', 'vegetable', 'drink', 'meat', 'dairy', 'grain', 'bakery', 'seafood',
+      'nut', 'spice', 'herb', 'sauce', 'condiment', 'beverage', 'snack', 'sweet', 'dessert',
+      'canned', 'frozen', 'fresh', 'organic', 'natural', 'healthy',
+      
+      // Русские категории
+      'еда', 'фрукт', 'овощ', 'напиток', 'мясо', 'молочный', 'зерно', 'выпечка', 'морепродукт',
+      'орех', 'специя', 'трава', 'соус', 'приправа', 'закуска', 'сладость', 'десерт',
+      'консерва', 'замороженный', 'свежий', 'органический', 'натуральный', 'здоровый',
+      
+      // Конкретные продукты
+      'apple', 'orange', 'banana', 'cucumber', 'tomato', 'potato', 'carrot', 'onion', 'garlic',
+      'chicken', 'beef', 'pork', 'fish', 'salmon', 'tuna', 'shrimp', 'crab', 'lobster',
+      'milk', 'cheese', 'yogurt', 'butter', 'cream', 'egg', 'bread', 'rice', 'pasta',
+      'water', 'juice', 'tea', 'coffee', 'wine', 'beer', 'chocolate', 'cake', 'cookie',
+      
+      // Русские названия продуктов
+      'яблоко', 'апельсин', 'банан', 'огурец', 'помидор', 'картофель', 'морковь', 'лук', 'чеснок',
+      'курица', 'говядина', 'свинина', 'рыба', 'лосось', 'тунец', 'креветка', 'краб', 'омар',
+      'молоко', 'сыр', 'йогурт', 'масло', 'сливки', 'яйцо', 'хлеб', 'рис', 'макароны',
+      'вода', 'сок', 'чай', 'кофе', 'вино', 'пиво', 'шоколад', 'торт', 'печенье'
+    ];
+    
     const lowerLabel = label.toLowerCase();
+    
+    // Исключаем общие не-пищевые категории
+    const nonFoodKeywords = [
+      'furniture', 'appliance', 'electronic', 'device', 'tool', 'equipment', 'machine',
+      'clothing', 'shoe', 'accessory', 'jewelry', 'watch', 'bag', 'purse',
+      'building', 'house', 'room', 'wall', 'floor', 'ceiling', 'window', 'door',
+      'vehicle', 'car', 'bike', 'motorcycle', 'airplane', 'boat', 'ship',
+      'animal', 'pet', 'dog', 'cat', 'bird', 'insect', 'plant', 'tree', 'flower',
+      'person', 'people', 'human', 'face', 'hand', 'eye', 'hair', 'body',
+      'text', 'word', 'letter', 'number', 'symbol', 'sign', 'logo', 'brand',
+      'container', 'packaging', 'box', 'bottle', 'can', 'jar', 'bag', 'wrapper',
+      'мебель', 'техника', 'электроника', 'устройство', 'инструмент', 'оборудование', 'машина',
+      'одежда', 'обувь', 'аксессуар', 'украшение', 'часы', 'сумка', 'кошелек',
+      'здание', 'дом', 'комната', 'стена', 'пол', 'потолок', 'окно', 'дверь',
+      'транспорт', 'машина', 'велосипед', 'мотоцикл', 'самолет', 'лодка', 'корабль',
+      'животное', 'питомец', 'собака', 'кошка', 'птица', 'насекомое', 'растение', 'дерево', 'цветок',
+      'человек', 'люди', 'лицо', 'рука', 'глаз', 'волосы', 'тело',
+      'текст', 'слово', 'буква', 'цифра', 'символ', 'знак', 'логотип', 'бренд',
+      'контейнер', 'упаковка', 'коробка', 'бутылка', 'банка', 'баночка', 'пакет', 'обертка'
+    ];
+    
+    // Если содержит не-пищевые ключевые слова, исключаем
+    if (nonFoodKeywords.some(keyword => lowerLabel.includes(keyword))) {
+      return false;
+    }
+    
+    // Проверяем наличие пищевых ключевых слов
     return foodKeywords.some(keyword => lowerLabel.includes(keyword));
   }
 
-  // Проверка, является ли название обобщенной категорией
+  // Проверка, является ли название обобщенной категорией (расширенная версия)
   private static isGenericCategory(name: string): boolean {
     const genericCategories = [
-      'food', 'meal', 'dish', 'product', 'ingredient', 'container', 'packaging',
-      'еда', 'блюдо', 'продукт', 'ингредиент', 'упаковка', 'контейнер', 'пакет',
-      'банка', 'бутылка', 'коробка', 'пакетик', 'баночка', 'емкость'
+      // Общие пищевые категории
+      'food', 'meal', 'dish', 'product', 'ingredient', 'item', 'stuff', 'thing',
+      'produce', 'grocery', 'provision', 'supply', 'commodity', 'material',
+      'еда', 'блюдо', 'продукт', 'ингредиент', 'предмет', 'вещь', 'штука',
+      'продукция', 'бакалея', 'провизия', 'запас', 'товар', 'материал',
+      
+      // Упаковка и контейнеры
+      'container', 'packaging', 'box', 'bottle', 'can', 'jar', 'bag', 'wrapper',
+      'package', 'packet', 'carton', 'tube', 'tin', 'pot', 'vessel', 'receptacle',
+      'контейнер', 'упаковка', 'коробка', 'бутылка', 'банка', 'баночка', 'пакет', 'обертка',
+      'упаковочный', 'тара', 'емкость', 'сосуд', 'посудина', 'вместилище',
+      
+      // Кухонная утварь и оборудование
+      'utensil', 'tool', 'equipment', 'appliance', 'device', 'instrument', 'gadget',
+      'kitchenware', 'cookware', 'tableware', 'cutlery', 'silverware', 'flatware',
+      'посуд', 'инструмент', 'оборудование', 'прибор', 'устройство', 'гаджет',
+      'кухонная утварь', 'посуда', 'столовые приборы', 'ножи', 'вилки', 'ложки',
+      
+      // Общие неопределенные термины
+      'object', 'subject', 'entity', 'element', 'component', 'part', 'piece',
+      'unit', 'module', 'section', 'segment', 'portion', 'fragment',
+      'объект', 'субъект', 'сущность', 'элемент', 'компонент', 'часть', 'кусок',
+      'единица', 'модуль', 'секция', 'сегмент', 'порция', 'фрагмент',
+      
+      // Разное
+      'unknown', 'unidentified', 'miscellaneous', 'various', 'assorted', 'mixed',
+      'неизвестный', 'неопознанный', 'разный', 'разнообразный', 'смешанный', 'ассорти'
     ];
     
     const lowerName = name.toLowerCase();
+    
+    // Дополнительная проверка: если название слишком короткое (менее 4 символов)
+    if (lowerName.length < 4) {
+      return true;
+    }
+    
+    // Дополнительная проверка: если название состоит только из цифр
+    if (/^\d+$/.test(lowerName)) {
+      return true;
+    }
+    
     return genericCategories.some(category => lowerName.includes(category));
   }
 
@@ -824,6 +1043,135 @@ export class VisionService {
       if (seen.has(key)) return false;
       seen.add(key);
       return true;
+    });
+  }
+
+  // Проверка, является ли продукт специфичным пищевым продуктом
+  private static isSpecificFood(name: string): boolean {
+    const specificFoods = [
+      // Фрукты
+      'яблоко', 'апельсин', 'банан', 'лимон', 'груша', 'виноград', 'персик', 'абрикос', 'слива', 'киви',
+      'манго', 'ананас', 'клубника', 'малина', 'черника', 'ежевика', 'арбуз', 'дыня', 'вишня', 'черешня',
+      'айва', 'гранат', 'папайя', 'гуава', 'личи', 'мандарин', 'грейпфрут', 'лайм', 'финик', 'инжир',
+      'apple', 'orange', 'banana', 'lemon', 'pear', 'grape', 'peach', 'apricot', 'plum', 'kiwi',
+      'mango', 'pineapple', 'strawberry', 'raspberry', 'blueberry', 'blackberry', 'watermelon', 'melon', 'cherry',
+      'quince', 'pomegranate', 'papaya', 'guava', 'lychee', 'tangerine', 'grapefruit', 'lime', 'date', 'fig',
+      
+      // Овощи
+      'помидор', 'огурец', 'морковь', 'лук', 'картофель', 'капуста', 'перец', 'баклажан', 'кабачок', 'тыква',
+      'свекла', 'редис', 'редиска', 'чеснок', 'имбирь', 'шпинат', 'салат', 'петрушка', 'укроп', 'базилик',
+      'сельдерей', 'редис', 'редиска', 'редисочка', 'редиска', 'редис', 'редиска', 'редис', 'редиска', 'редис',
+      'tomato', 'cucumber', 'carrot', 'onion', 'potato', 'cabbage', 'pepper', 'eggplant', 'zucchini', 'pumpkin',
+      'beet', 'radish', 'garlic', 'ginger', 'spinach', 'lettuce', 'parsley', 'dill', 'basil', 'celery',
+      
+      // Молочные продукты
+      'молоко', 'сыр', 'йогурт', 'сметана', 'творог', 'кефир', 'масло сливочное', 'ряженка', 'простокваша', 'сливки',
+      'творожный сыр', 'моцарелла', 'брынза', 'сгущенное молоко', 'йогурт питьевой', 'кефирный продукт', 'молочный коктейль',
+      'milk', 'cheese', 'yogurt', 'sour cream', 'cottage cheese', 'kefir', 'butter', 'cream', 'mozzarella', 'feta',
+      
+      // Мясо и птица
+      'курица', 'говядина', 'свинина', 'индейка', 'утка', 'гусь', 'кролик', 'телятина', 'баранина', 'колбаса',
+      'сосиски', 'ветчина', 'бекон', 'сало', 'фарш', 'пельмени', 'котлеты', 'шашлык', 'стейк', 'грудинка',
+      'chicken', 'beef', 'pork', 'turkey', 'duck', 'goose', 'rabbit', 'veal', 'lamb', 'sausage',
+      'sausages', 'ham', 'bacon', 'lard', 'minced meat', 'dumplings', 'cutlets', 'shashlik', 'steak',
+      
+      // Рыба и морепродукты
+      'рыба', 'лосось', 'тунец', 'селедка', 'скумбрия', 'камбала', 'треска', 'окунь', 'щука', 'карп',
+      'креветки', 'кальмары', 'мидии', 'устрицы', 'краб', 'икра', 'крабовые палочки', 'морской коктейль', 'осьминог',
+      'fish', 'salmon', 'tuna', 'herring', 'mackerel', 'flounder', 'cod', 'perch', 'pike', 'carp',
+      'shrimp', 'squid', 'mussels', 'oysters', 'crab', 'caviar', 'crab sticks', 'seafood mix', 'octopus',
+      
+      // Бакалея
+      'хлеб', 'рис', 'макароны', 'мука', 'сахар', 'соль', 'масло растительное', 'крупа гречневая', 'овсяные хлопья',
+      'манная крупа', 'пшено', 'перловка', 'кукурузная крупа', 'горох', 'фасоль', 'чечевица', 'нут', 'соя', 'кукуруза',
+      'bread', 'rice', 'pasta', 'flour', 'sugar', 'salt', 'vegetable oil', 'buckwheat', 'oatmeal', 'semolina',
+      'millet', 'pearl barley', 'corn grits', 'peas', 'beans', 'lentils', 'chickpeas', 'soy', 'corn',
+      
+      // Напитки
+      'вода', 'сок', 'чай', 'кофе', 'газировка', 'лимонад', 'квас', 'компот', 'морс', 'минеральная вода',
+      'энергетик', 'спортивное питание', 'молочный коктейль', 'смузи', 'какао', 'горячий шоколад', 'вино', 'пиво', 'водка',
+      'water', 'juice', 'tea', 'coffee', 'soda', 'lemonade', 'kvass', 'compote', 'fruit drink', 'mineral water',
+      'energy drink', 'sports nutrition', 'milkshake', 'smoothie', 'cocoa', 'hot chocolate', 'wine', 'beer', 'vodka',
+      
+      // Сладости и выпечка
+      'шоколад', 'печенье', 'торт', 'пирожное', 'конфеты', 'вафли', 'пряники', 'зефир', 'мармелад', 'халва',
+      'пастила', 'кекс', 'булочка', 'круассан', 'пончик', 'пирог', 'пирожок', 'бублик', 'сушки', 'сухари',
+      'chocolate', 'cookie', 'cake', 'pastry', 'candy', 'waffles', 'gingerbread', 'marshmallow', 'marmalade', 'halva',
+      'pastila', 'cupcake', 'bun', 'croissant', 'donut', 'pie', 'pirozhok', 'bagel', 'sushki', 'crackers',
+      
+      // Замороженные продукты
+      'мороженое', 'пельмени', 'овощи замороженные', 'ягоды замороженные', 'фрукты замороженные', 'рыба замороженная',
+      'мясо замороженное', 'полуфабрикаты', 'блинчики', 'вареники', 'голубцы', 'котлеты замороженные', 'пицца замороженная',
+      'ice cream', 'dumplings', 'frozen vegetables', 'frozen berries', 'frozen fruits', 'frozen fish',
+      'frozen meat', 'semi-finished products', 'pancakes', 'vareniki', 'stuffed cabbage', 'frozen cutlets', 'frozen pizza',
+      
+      // Консервы
+      'овощные консервы', 'фруктовые консервы', 'рыбные консервы', 'мясные консервы', 'джем', 'варенье', 'мед',
+      'сгущенное молоко', 'томатная паста', 'кукуруза консервированная', 'горошек консервированный', 'фасоль консервированная',
+      'canned vegetables', 'canned fruits', 'canned fish', 'canned meat', 'jam', 'preserves', 'honey',
+      'condensed milk', 'tomato paste', 'canned corn', 'canned peas', 'canned beans'
+    ];
+    
+    const lowerName = name.toLowerCase();
+    return specificFoods.some(food => lowerName.includes(food));
+  }
+
+  // Проверка на потенциальный пищевой продукт (расширенная проверка)
+  private static isPotentialFood(name: string): boolean {
+    const lowerName = name.toLowerCase();
+    
+    // Исключаем заведомо не-пищевые категории
+    if (this.isGenericCategory(lowerName)) {
+      return false;
+    }
+    
+    // Проверяем по расширенному списку пищевых характеристик
+    const foodIndicators = [
+      // Формы и характеристики продуктов
+      'round', 'oval', 'long', 'thin', 'thick', 'small', 'large', 'fresh', 'ripe', 'raw', 'cooked',
+      'круглый', 'овальный', 'длинный', 'тонкий', 'толстый', 'маленький', 'большой', 'свежий', 'спелый', 'сырой', 'готовый',
+      
+      // Цвета, связанные с едой
+      'red', 'green', 'yellow', 'orange', 'brown', 'white', 'pink', 'purple', 'blue',
+      'красный', 'зеленый', 'желтый', 'оранжевый', 'коричневый', 'белый', 'розовый', 'фиолетовый', 'синий',
+      
+      // Текстуры и поверхности
+      'smooth', 'rough', 'bumpy', 'shiny', 'matte', 'soft', 'hard', 'crunchy', 'juicy',
+      'гладкий', 'шероховатый', 'бугристый', 'блестящий', 'матовый', 'мягкий', 'твердый', 'хрустящий', 'сочный'
+    ];
+    
+    // Если название содержит пищевые индикаторы, считаем потенциальным продуктом
+    return foodIndicators.some(indicator => lowerName.includes(indicator));
+  }
+
+  // Проверка на схожесть продуктов (для избежания дубликатов)
+  private static isSimilarProduct(name1: string, name2: string): boolean {
+    const lower1 = name1.toLowerCase();
+    const lower2 = name2.toLowerCase();
+    
+    // Если названия идентичны
+    if (lower1 === lower2) {
+      return true;
+    }
+    
+    // Если одно название содержится в другом
+    if (lower1.includes(lower2) || lower2.includes(lower1)) {
+      return true;
+    }
+    
+    // Проверка на синонимы и похожие продукты
+    const similarProducts = [
+      ['яблоко', 'apple'], ['апельсин', 'orange'], ['банан', 'banana'], ['лимон', 'lemon'],
+      ['помидор', 'tomato'], ['огурец', 'cucumber'], ['морковь', 'carrot'], ['лук', 'onion'],
+      ['картофель', 'potato'], ['капуста', 'cabbage'], ['перец', 'pepper'], ['баклажан', 'eggplant'],
+      ['молоко', 'milk'], ['сыр', 'cheese'], ['йогурт', 'yogurt'], ['сметана', 'sour cream'],
+      ['курица', 'chicken'], ['говядина', 'beef'], ['свинина', 'pork'], ['рыба', 'fish'],
+      ['хлеб', 'bread'], ['рис', 'rice'], ['макароны', 'pasta'], ['сахар', 'sugar']
+    ];
+    
+    return similarProducts.some(([prod1, prod2]) => {
+      return (lower1.includes(prod1) && lower2.includes(prod2)) ||
+             (lower1.includes(prod2) && lower2.includes(prod1));
     });
   }
 

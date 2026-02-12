@@ -3,7 +3,6 @@ import { Product } from '../types';
 
 interface DashboardProps {
   products: Product[];
-  onAddProduct: (product: Product) => void;
   onUpdateProduct: (id: string, updates: Partial<Product>) => void;
   onDeleteProduct: (id: string) => void;
   onNavigate: (view: string) => void;
@@ -11,7 +10,6 @@ interface DashboardProps {
 
 const Dashboard: React.FC<DashboardProps> = ({
   products,
-  onAddProduct,
   onUpdateProduct,
   onDeleteProduct,
   onNavigate
@@ -62,13 +60,13 @@ const Dashboard: React.FC<DashboardProps> = ({
 
           <button
             onClick={() => onNavigate('photo')}
-            className="flex flex-col items-center justify-center p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-primary-400 hover:bg-primary-50 transition-colors group"
+            className="flex flex-col items-center justify-center p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-400 hover:bg-blue-50 transition-colors group"
           >
-            <div className="w-12 h-12 bg-primary-100 rounded-full flex items-center justify-center mb-2 group-hover:bg-primary-200 transition-colors">
-              <span className="text-2xl">📸</span>
+            <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-2 group-hover:bg-blue-200 transition-colors">
+              <span className="text-2xl">🤖</span>
             </div>
-            <span className="text-sm font-medium text-gray-700">Фото холодильника</span>
-            <span className="text-xs text-green-600 mt-1">Авто-распознавание</span>
+            <span className="text-sm font-medium text-gray-700">AI Распознавание</span>
+            <span className="text-xs text-blue-600 mt-1">Нейросети + Компьютерное зрение</span>
           </button>
         </div>
       </div>

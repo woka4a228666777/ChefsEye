@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Product, Recipe } from './types';
 import { storage } from './utils/storage';
 import Dashboard from './components/Dashboard';
 import ManualInput from './components/ManualInput';
 import ReceiptInput from './components/ReceiptInput';
-import PhotoInput from './components/PhotoInput';
+import AIVisionInput from './components/AIVisionInput';
 import RecipeList from './components/RecipeList';
 import ShoppingList from './components/ShoppingList';
 
@@ -114,10 +114,9 @@ function App() {
         {currentView === 'dashboard' && (
           <Dashboard
             products={products}
-            onAddProduct={handleAddProduct}
             onUpdateProduct={handleUpdateProduct}
             onDeleteProduct={handleDeleteProduct}
-            onNavigate={setCurrentView}
+            onNavigate={(view) => setCurrentView(view as Parameters<typeof setCurrentView>[0])}
           />
         )}
 
@@ -139,7 +138,7 @@ function App() {
         )}
 
         {currentView === 'photo' && (
-          <PhotoInput
+          <AIVisionInput
             onAddProducts={(newProducts) => {
               newProducts.forEach(handleAddProduct);
               setCurrentView('dashboard');

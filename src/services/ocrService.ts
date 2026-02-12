@@ -1,10 +1,7 @@
 // Сервис для распознавания текста с чеков (OCR)
 // Используем бесплатный OCR API от OCR.Space
 
-interface OCRResult {
-  text: string;
-  confidence: number;
-}
+
 
 interface ReceiptParseResult {
   products: string[];
@@ -49,16 +46,16 @@ export class OCRService {
       
       // Если OCR вернул мало текста, используем демо-режим
       console.warn('OCR вернул мало текста, используем демо-режим');
-      return await this.demoOCRProcessing(imageFile);
+      return await this.demoOCRProcessing();
       
     } catch (error) {
       console.warn('OCR API недоступно, используем демо-режим:', error);
       // Fallback to demo mode
-      return await this.demoOCRProcessing(imageFile);
+      return await this.demoOCRProcessing();
     }
   }
 
-  private static async demoOCRProcessing(file: File): Promise<string> {
+  private static async demoOCRProcessing(): Promise<string> {
     // Демо-режим: возвращаем пример текста чека
     const demoReceipts = [
       `ПЯТЕРОЧКА

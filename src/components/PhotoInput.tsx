@@ -130,7 +130,7 @@ const PhotoInput: React.FC<PhotoInputProps> = ({ onAddProducts, onBack }) => {
               <div>
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
                   <img
-                    src={selectedImage}
+                    src={selectedImage || undefined}
                     alt="Загруженное фото"
                     className="w-full h-auto max-h-96 object-contain mx-auto"
                   />
