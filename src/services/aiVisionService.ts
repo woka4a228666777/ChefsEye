@@ -4,11 +4,11 @@ import axios from 'axios';
 const AI_CONFIG = {
   // Основной сервис - современная нейросеть для распознавания продуктов
   PRIMARY_API: 'https://api-inference.huggingface.co/models/microsoft/resnet-50',
-  PRIMARY_TOKEN: import.meta.env.VITE_HUGGING_FACE_TOKEN || '',
+  PRIMARY_TOKEN: '', // Будет устанавливаться через init() метод
   
   // Альтернативный сервис - Google Cloud Vision
   GOOGLE_VISION_API: 'https://vision.googleapis.com/v1/images:annotate',
-  GOOGLE_API_KEY: import.meta.env.VITE_GOOGLE_VISION_KEY || '',
+  GOOGLE_API_KEY: '', // Будет устанавливаться через init() метод
   
   // Fallback сервисы
   FALLBACK_APIS: [
@@ -78,6 +78,17 @@ const PRODUCT_KNOWLEDGE_BASE = {
 };
 
 class AIVisionService {
+  // Инициализация сервиса с API ключами
+  static init(config: { huggingFaceToken?: string; googleVisionKey?: string }) {
+    if (config.huggingFaceToken) {
+      AI_CONFIG.PRIMARY_TOKEN = config.huggingFaceToken;
+    }
+    if (config.googleVisionKey) {
+      AI_CONFIG.GOOGLE_API_KEY = config.googleVisionKey;
+    }
+    console.log('[AIVisionService] Сервис инициализирован');
+  }
+
   // Основной метод для распознавания продуктов
   static async detectProducts(imageFile: File, onProgress?: (stage: string) => void): Promise<AIVisionResult> {
     console.log('[AIVisionService] Начинаем распознавание продуктов');
